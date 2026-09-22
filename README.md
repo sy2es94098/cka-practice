@@ -6,6 +6,7 @@ CKA 考前練習包，包含兩套可在 Killercoda 或本機集群上一鍵佈�
 |---|---|---|---|
 | `cka-mock/` | 對照 2026 高頻題型的模擬考（Gateway API、HPA、PriorityClass、CRD、排錯、NetworkPolicy…），題目為英文，附自動評分 | 12 | 90 分 |
 | `helm-lab/` | Helm 專項練習（repo、template、指定版本安裝、upgrade/rollback、--skip-crds…），題目為英文，附自動檢查 | 12 | 60 分 |
+| `troubleshoot-lab/` | 控制平面與節點排錯：跑破壞腳本讓集群壞掉，再用 crictl / journalctl / manifest 修復（apiserver 連不到 etcd、kubelet 設定錯、節點 NotReady…） | 10 + Combo | 90 分 |
 
 ## 環境需求
 
@@ -42,7 +43,29 @@ less cka-mock/questions.md
 | `helm` | 安裝 helm、設定 alias、佈置 helm-lab 情境 |
 | `all` | 兩套一起佈置（約 2–3 分鐘） |
 
+（troubleshoot-lab 不經過 bootstrap，見下一節。）
+
 Killercoda 免費環境 60 分鐘會被清除，重開 playground 後再貼同一行即可，做到第幾題請自行記錄。
+
+## 快速開始（troubleshoot-lab）
+
+排錯 lab **不需要 bootstrap**（不用 helm、不佈置資源），只要 clone 後以 root 執行破壞腳本：
+
+```bash
+git clone https://github.com/sy2es94098/cka-practice.git && cd cka-practice/troubleshoot-lab && chmod +x *.sh breaks/*.sh
+sudo -i                                     # Killercoda 預設已是 root 可省略
+cd /root/cka-practice/troubleshoot-lab      # 依實際 clone 路徑
+./breaks/01-apiserver-etcd-endpoint.sh      # 破壞（第一次會自動備份到 /root/cka-backup）
+less questions.md                           # 看 Scenario 1 的題目描述，開始排錯
+# ...修好後...
+kubectl get nodes && kubectl -n kube-system get pods
+./restore.sh                                # 還原，再跑下一個 break
+```
+
+- Scenario 6、8 要在 worker 上跑：`ssh node01`、`sudo -i`，再執行對應腳本（腳本需先 `scp` 過去或在 node01 再 clone 一次）。
+- 一次只跑一個 break；Combo 題見 `questions.md` 最後。
+- 若已跑過 `bootstrap.sh`（例如同一環境先做了 cka-mock），可直接 `cd troubleshoot-lab` 使用，互不影響。
+- 考前務必讀 `troubleshoot-lab/playbook.md`：無 kubectl 時的固定排錯順序。
 
 ## 手動佈置（不用 bootstrap）
 
@@ -107,6 +130,7 @@ kind create cluster --name cka           # 或 minikube start
 - 2GB 節點跑 helm-lab Task 10（ArgoCD）較吃資源，做到 `helm template --skip-crds` 驗證即可，不必等 Pod 全 Running。
 - 題目要求寫入 `/opt/*.txt` 的檔案在環境清除後消失，屬正常現象。
 - cka-mock Q1 的 GatewayClass `nginx-class` 沒有真實 controller，Gateway 會停在 Unknown/Pending 狀態，這不影響 YAML 正確性的驗證。
+- troubleshoot-lab 會直接修改 `/etc/kubernetes` 與 kubelet 設定，只在練習環境執行；修復後 kubelet 最多需 20 秒重讀 manifest，apiserver 起來後再等 20–30 秒 kubectl 才會通。
 
 ## 檔案結構
 
@@ -121,14 +145,22 @@ cka-practice/
 │   ├── questions.md    # 題目（英文）
 │   ├── solutions.md    # 解答與陷阱
 │   └── README.md
-└── helm-lab/
-    ├── setup.sh
-    ├── reset.sh        # 清除後重建
-    ├── check.sh        # 自動檢查
-    ├── tasks.md        # 題目（英文）
+├── helm-lab/
+│   ├── setup.sh
+│   ├── reset.sh        # 清除後重建
+│   ├── check.sh        # 自動檢查
+│   ├── tasks.md        # 題目（英文）
+│   ├── solutions.md
+│   ├── README.md
+│   └── charts/webapp/
+└── troubleshoot-lab/
+    ├── breaks/*.sh     # 10 個破壞腳本
+    ├── restore.sh      # 還原到破壞前
+    ├── lib.sh
+    ├── playbook.md     # 無 kubectl 時的排錯順序（考前必讀）
+    ├── questions.md    # 題目（英文）
     ├── solutions.md
-    ├── README.md
-    └── charts/webapp/
+    └── README.md
 ```
 
 ## Windows 使用者
@@ -142,5 +174,5 @@ git add --renormalize .
 在 Linux 環境若 script 出現 `$'\r': command not found`，表示帶有 CRLF，修正：
 
 ```bash
-sed -i 's/\r$//' bootstrap.sh cka-mock/*.sh helm-lab/*.sh
+sed -i 's/\r$//' bootstrap.sh cka-mock/*.sh helm-lab/*.sh troubleshoot-lab/*.sh troubleshoot-lab/breaks/*.sh
 ```
