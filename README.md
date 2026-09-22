@@ -4,8 +4,8 @@ CKA 考前練習包，包含兩套可在 Killercoda 或本機集群上一鍵佈�
 
 | 目錄 | 內容 | 題數 | 建議時間 |
 |---|---|---|---|
-| `cka-mock/` | 對照 2026 高頻題型的模擬考（Gateway API、HPA、PriorityClass、CRD、排錯、NetworkPolicy…） | 12 | 90 分 |
-| `helm-lab/` | Helm 專項練習（repo、template、指定版本安裝、upgrade/rollback、--skip-crds…） | 12 | 60 分 |
+| `cka-mock/` | 對照 2026 高頻題型的模擬考（Gateway API、HPA、PriorityClass、CRD、排錯、NetworkPolicy…），題目為英文，附自動評分 | 12 | 90 分 |
+| `helm-lab/` | Helm 專項練習（repo、template、指定版本安裝、upgrade/rollback、--skip-crds…），題目為英文，附自動檢查 | 12 | 60 分 |
 
 ## 環境需求
 
@@ -19,13 +19,19 @@ CKA 考前練習包，包含兩套可在 Killercoda 或本機集群上一鍵佈�
 2. 在終端機貼上：
 
 ```bash
-git clone https://github.com/sy2es94098/cka-practice.git && cd cka-practice && chmod +x bootstrap.sh cka-mock/setup.sh helm-lab/setup.sh helm-lab/reset.sh && ./bootstrap.sh mock && source ~/.bashrc
+git clone https://github.com/sy2es94098/cka-practice.git && cd cka-practice && chmod +x bootstrap.sh cka-mock/*.sh helm-lab/*.sh && ./bootstrap.sh mock && source ~/.bashrc
 ```
 
-3. 開題目：
+3. 開題目（英文版純 ASCII，`less` 不會亂碼）：
 
 ```bash
 less cka-mock/questions.md
+```
+
+4. 做完評分：
+
+```bash
+./cka-mock/check.sh
 ```
 
 `bootstrap.sh` 參數：
@@ -73,9 +79,19 @@ k apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2
 ## 使用方式
 
 1. 計時作答，每題上限 10 分鐘，超過就看解答、理解後重做。
-2. 每題做完用題目附的驗證指令自我檢查。
-3. 對照 `solutions.md` 評分（cka-mock 100 分制，66 分及格）。
-4. 全部做完後重開環境、不看提示再跑一輪，目標每題 < 8 分鐘。
+2. 每題做完先用題目附的 Verify 指令自我檢查（考場上要養成的習慣）。
+3. 全部做完後執行自動評分：
+
+```bash
+./cka-mock/check.sh      # 每題 PASS/FAIL + 總分，66 分及格
+./helm-lab/check.sh      # 逐項 PASS/FAIL + 通過數
+```
+
+FAIL 的那一行會指出哪個要求沒達到，修正後可重跑。cka-mock 一題要所有檢查點都 PASS 才計分。
+4. 對照 `solutions.md` 看陷阱說明與復習建議。
+5. 重開環境、不看提示再跑一輪，目標每題 < 8 分鐘。
+
+注意：`check.sh` 只看最終狀態，請在同一個環境內做完再檢查，中途重開環境會全部 FAIL。
 
 ## 本機使用（kind / minikube）
 
@@ -84,7 +100,7 @@ kind create cluster --name cka           # 或 minikube start
 ./bootstrap.sh all
 ```
 
-限制：kind 節點是容器，無法 ssh 到節點、無法練 kubeadm 升級；cka-mock Q11 的 drain 步驤在單節點時略過。
+限制：kind 節點是容器，無法 ssh 到節點、無法練 kubeadm 升級；cka-mock Q11 的 drain 步驟在單節點時略過。
 
 ## 已知限制
 
@@ -100,14 +116,16 @@ cka-practice/
 ├── bootstrap.sh
 ├── .gitattributes
 ├── cka-mock/
-│   ├── setup.sh
-│   ├── questions.md
-│   ├── solutions.md
+│   ├── setup.sh        # 佈置情境
+│   ├── check.sh        # 自動評分
+│   ├── questions.md    # 題目（英文）
+│   ├── solutions.md    # 解答與陷阱
 │   └── README.md
 └── helm-lab/
     ├── setup.sh
-    ├── reset.sh
-    ├── tasks.md
+    ├── reset.sh        # 清除後重建
+    ├── check.sh        # 自動檢查
+    ├── tasks.md        # 題目（英文）
     ├── solutions.md
     ├── README.md
     └── charts/webapp/
@@ -124,5 +142,5 @@ git add --renormalize .
 在 Linux 環境若 script 出現 `$'\r': command not found`，表示帶有 CRLF，修正：
 
 ```bash
-sed -i 's/\r$//' bootstrap.sh cka-mock/setup.sh helm-lab/setup.sh helm-lab/reset.sh
+sed -i 's/\r$//' bootstrap.sh cka-mock/*.sh helm-lab/*.sh
 ```
