@@ -1,0 +1,2 @@
+webapp installed as release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+Replicas: {{ .Values.replicaCount }}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: webapp
+description: A simple web app chart for CKA Helm practice
+type: application
+version: 1.0.0
+appVersion: "1.25"
