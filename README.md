@@ -19,7 +19,7 @@ CKA 考前練習包，包含兩套可在 Killercoda 或本機集群上一鍵佈�
 2. 在終端機貼上：
 
 ```bash
-git clone https://github.com/<你的帳號>/cka-practice.git && cd cka-practice && ./bootstrap.sh mock && source ~/.bashrc
+https://github.com/sy2es94098/cka-practice.git && cd cka-practice && ./bootstrap.sh mock && source ~/.bashrc
 ```
 
 3. 開題目：
